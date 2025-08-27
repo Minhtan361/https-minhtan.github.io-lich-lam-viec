@@ -3,20 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Ứng dụng đăng ký ca làm việc cho nhân viên">
-  <meta name="author" content="minhtan">
   <title>Lịch Làm by minhtan</title>
-  <!-- TailwindCSS CDN -->
+  <!-- TailwindCSS CDN (chỉ để tạo giao diện hiện đại) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <style>
-    /* Giữ nguyên các style từ file gốc */
+    /* Scrollbar gọn gàng */
     ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px}
     
+    /* Hiệu ứng và animation */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -83,217 +78,199 @@
       70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-
-    /* Thêm style cho phần đăng nhập */
-    .login-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .login-form {
-      background: white;
-      border-radius: 1rem;
-      padding: 2rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 400px;
-    }
   </style>
 </head>
-<body>
-  
-
-  <!-- Ứng dụng chính (ẩn ban đầu) -->
-  <div id="appContainer" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-slate-800 hidden">
-    <div class="max-w-6xl mx-auto p-4 sm:p-6">
-      <!-- Header -->
-      <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-        <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
-          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-clip-text text-transparent gradient-bg">
-            <i class="fas fa-calendar-alt mr-2"></i>Đăng Ký Ca Làm by minhtan
-          </h1>
-          <div class="flex flex-wrap gap-3 mt-3">
-            <div class="flex items-center text-sm">
-              <div class="w-3 h-3 rounded-full bg-amber-400 mr-2"></div>
-              <span class="text-slate-600">Buổi sáng: <b id="morning-capacity-text">2</b> người (T2→CN)</span>
-            </div>
-            <div class="flex items-center text-sm">
-              <div class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></div>
-              <span class="text-slate-600">Buổi tối: <b id="evening-weekday-capacity-text">4</b> người (T2→T5), <b id="evening-weekend-capacity-text">5</b> người (T6→CN)</span>
-            </div>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-slate-800">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+      <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-clip-text text-transparent gradient-bg">
+          <i class="fas fa-calendar-alt mr-2"></i>Đăng Ký Ca Làm by minhtan
+        </h1>
+        <div class="flex flex-wrap gap-3 mt-3">
+          <div class="flex items-center text-sm">
+            <div class="w-3 h-3 rounded-full bg-amber-400 mr-2"></div>
+            <span class="text-slate-600">Buổi sáng: <b id="morning-capacity-text">2</b> người (T2→CN)</span>
+          </div>
+          <div class="flex items-center text-sm">
+            <div class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></div>
+            <span class="text-slate-600">Buổi tối: <b id="evening-weekday-capacity-text">4</b> người (T2→T5), <b id="evening-weekend-capacity-text">5</b> người (T6→CN)</span>
           </div>
         </div>
-        
-        <!-- Tuần và thông tin user -->
-        <div class="bg-white rounded-2xl p-4 shadow-lg border border-slate-100">
-          <div class="flex flex-col sm:flex-row items-center gap-3">
-            <label class="text-sm text-slate-600 whitespace-nowrap" for="weekStart">
-              <i class="far fa-calendar mr-1"></i>Tuần bắt đầu:
-            </label>
-            <input id="weekStart" type="date" class="px-4 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <div class="flex gap-2">
-              <button id="prevWeek" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm hover:bg-slate-50 transition-colors">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button id="nextWeek" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm hover:bg-slate-50 transition-colors">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-          <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span id="userEmail" class="text-sm text-slate-600"></span>
-            <button id="logoutBtn" class="text-sm text-rose-600 hover:text-rose-700">
-              <i class="fas fa-sign-out-alt mr-1"></i>Đăng xuất
+      </div>
+      
+      <!-- Tuần -->
+      <div class="bg-white rounded-2xl p-4 shadow-lg border border-slate-100">
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+          <label class="text-sm text-slate-600 whitespace-nowrap" for="weekStart">
+            <i class="far fa-calendar mr-1"></i>Tuần bắt đầu:
+          </label>
+          <input id="weekStart" type="date" class="px-4 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <div class="flex gap-2">
+            <button id="prevWeek" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm hover:bg-slate-50 transition-colors">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button id="nextWeek" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm hover:bg-slate-50 transition-colors">
+              <i class="fas fa-chevron-right"></i>
             </button>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <!-- Thông báo -->
-      <div id="toast" class="hidden mb-6 p-4 rounded-xl border-l-4 shadow-md"></div>
+    <!-- Thông báo -->
+    <div id="toast" class="hidden mb-6 p-4 rounded-xl border-l-4 shadow-md"></div>
 
-      <!-- Form đăng ký -->
-      <section class="grid md:grid-cols-2 gap-6 mb-8">
-        <form id="signupForm" class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 border border-slate-100 card-hover">
-          <h2 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-pen-to-square mr-2 text-indigo-500"></i>Đăng ký ca
+    <!-- Form đăng ký -->
+    <section class="grid md:grid-cols-2 gap-6 mb-8">
+      <form id="signupForm" class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 border border-slate-100 card-hover">
+        <h2 class="font-semibold text-lg mb-4 flex items-center">
+          <i class="fas fa-pen-to-square mr-2 text-indigo-500"></i>Đăng ký ca
+        </h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="text-sm text-slate-600 font-medium">Họ và tên</label>
+            <div class="relative mt-1">
+              <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+              <select id="empName" class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                <option value="">-- Chọn nhân viên --</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 font-medium">Buổi</label>
+            <div class="relative mt-1">
+              <i class="fas fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+              <select id="shift" class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="sang">Sáng</option>
+                <option value="toi">Tối</option>
+              </select>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-sm text-slate-600 font-medium">Chọn ngày (trong tuần đang xem)</label>
+            <div id="dayChoices" class="mt-2 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2"></div>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-sm text-slate-600 font-medium">Ghi chú (tùy chọn)</label>
+            <div class="relative mt-1">
+              <i class="fas fa-sticky-note absolute left-3 top-3 transform -translate-y-1/2 text-slate-400"></i>
+              <textarea id="note" placeholder="Ghi chú cho ca làm này..." class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+          <p class="text-xs text-slate-500"><i class="fas fa-info-circle mr-1"></i>Không thể đăng ký trùng ca cùng ngày.</p>
+          <button class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-colors flex items-center" type="submit">
+            <i class="fas fa-check-circle mr-2"></i>Đăng ký
+          </button>
+        </div>
+      </form>
+
+      <!-- Khối quản trị -->
+      <div class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 border border-slate-100 card-hover">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-lg flex items-center">
+            <i class="fas fa-lock mr-2 text-slate-600"></i>Quản trị
           </h2>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
-              <label class="text-sm text-slate-600 font-medium">Họ và tên</label>
-              <div class="relative mt-1">
-                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                <select id="empName" class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                  <option value="">-- Chọn nhân viên --</option>
-                </select>
-              </div>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <i class="fas fa-key absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+              <input id="adminPassword" type="password" placeholder="Mật khẩu admin" class="pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <button id="adminToggle" class="px-4 py-2.5 rounded-xl bg-slate-800 text-white hover:opacity-90 transition-colors">Đăng nhập</button>
+          </div>
+        </div>
+        <p id="adminNote" class="mt-3 text-sm text-slate-500 bg-slate-50 p-2 rounded-lg">
+          <i class="fas fa-shield-alt mr-1"></i>Chỉ admin mới xóa/chỉnh đăng ký và xuất Excel (CSV).
+        </p>
+        <div class="mt-4 flex items-center gap-3 pt-4 border-t border-slate-100">
+          <button id="exportBtn" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors flex items-center" disabled>
+            <i class="fas fa-file-export mr-2"></i>Xuất Excel
+          </button>
+          <button id="clearWeekBtn" class="px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 transition-colors flex items-center pulse-alert" disabled>
+            <i class="fas fa-trash mr-2"></i>Xóa tuần
+          </button>
+        </div>
+        <div id="adminControls" class="hidden mt-4 pt-4 border-t border-slate-100">
+          <h3 class="font-medium mb-3 flex items-center">
+            <i class="fas fa-users-cog mr-2 text-indigo-500"></i>Quản lý nhân viên
+          </h3>
+          <div class="flex gap-2 mb-3">
+            <input id="newEmployee" type="text" placeholder="Tên nhân viên mới" class="flex-1 px-4 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button id="addEmployeeBtn" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+              <i class="fas fa-plus mr-1"></i>Thêm
+            </button>
+          </div>
+          <div class="max-h-40 overflow-y-auto mb-4">
+            <ul id="employeeList" class="space-y-1"></ul>
+          </div>
+          
+          <h3 class="font-medium mb-3 flex items-center mt-4">
+            <i class="fas fa-sliders-h mr-2 text-indigo-500"></i>Tùy chỉnh sức chứa
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-sm text-slate-600">Sáng (T2-CN)</label>
+              <input id="capacityMorning" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div>
-              <label class="text-sm text-slate-600 font-medium">Buổi</label>
-              <div class="relative mt-1">
-                <i class="fas fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                <select id="shift" class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="sang">Sáng</option>
-                  <option value="toi">Tối</option>
-                </select>
-              </div>
+              <label class="text-sm text-slate-600">Tối (T2-T5)</label>
+              <input id="capacityEveningWeekday" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-            <div class="sm:col-span-2">
-              <label class="text-sm text-slate-600 font-medium">Chọn ngày (trong tuần đang xem)</label>
-              <div id="dayChoices" class="mt-2 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2"></div>
-            </div>
-            <div class="sm:col-span-2">
-              <label class="text-sm text-slate-600 font-medium">Ghi chú (tùy chọn)</label>
-              <div class="relative mt-1">
-                <i class="fas fa-sticky-note absolute left-3 top-3 transform -translate-y-1/2 text-slate-400"></i>
-                <textarea id="note" placeholder="Ghi chú cho ca làm này..." class="pl-10 pr-4 py-3 w-full rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2"></textarea>
-              </div>
+            <div>
+              <label class="text-sm text-slate-600">Tối (T6-CN)</label>
+              <input id="capacityEveningWeekend" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
           </div>
-          <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
-            <p class="text-xs text-slate-500"><i class="fas fa-info-circle mr-1"></i>Không thể đăng ký trùng ca cùng ngày.</p>
-            <button class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-colors flex items-center" type="submit">
-              <i class="fas fa-check-circle mr-2"></i>Đăng ký
-            </button>
-          </div>
-        </form>
-
-        <!-- Khối quản trị -->
-        <div id="adminSection" class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 border border-slate-100 card-hover hidden">
-          <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-lg flex items-center">
-              <i class="fas fa-lock mr-2 text-slate-600"></i>Quản trị
-            </h2>
-          </div>
-          <p id="adminNote" class="mt-3 text-sm text-slate-500 bg-slate-50 p-2 rounded-lg">
-            <i class="fas fa-shield-alt mr-1"></i>Chỉ admin mới xóa/chỉnh đăng ký và xuất Excel (CSV).
-          </p>
-          <div class="mt-4 flex items-center gap-3 pt-4 border-t border-slate-100">
-            <button id="exportBtn" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors flex items-center">
-              <i class="fas fa-file-export mr-2"></i>Xuất Excel
-            </button>
-            <button id="clearWeekBtn" class="px-4 py-2.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 transition-colors flex items-center pulse-alert">
-              <i class="fas fa-trash mr-2"></i>Xóa tuần
-            </button>
-          </div>
-          <div id="adminControls" class="mt-4 pt-4 border-t border-slate-100">
-            <h3 class="font-medium mb-3 flex items-center">
-              <i class="fas fa-users-cog mr-2 text-indigo-500"></i>Quản lý nhân viên
-            </h3>
-            <div class="flex gap-2 mb-3">
-              <input id="newEmployee" type="text" placeholder="Tên nhân viên mới" class="flex-1 px-4 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <button id="addEmployeeBtn" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-                <i class="fas fa-plus mr-1"></i>Thêm
-              </button>
-            </div>
-            <div class="max-h-40 overflow-y-auto mb-4">
-              <ul id="employeeList" class="space-y-1"></ul>
-            </div>
-            
-            <h3 class="font-medium mb-3 flex items-center mt-4">
-              <i class="fas fa-sliders-h mr-2 text-indigo-500"></i>Tùy chỉnh sức chứa
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="text-sm text-slate-600">Sáng (T2-CN)</label>
-                <input id="capacityMorning" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div>
-                <label class="text-sm text-slate-600">Tối (T2-T5)</label>
-                <input id="capacityEveningWeekday" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div>
-                <label class="text-sm text-slate-600">Tối (T6-CN)</label>
-                <input id="capacityEveningWeekend" type="number" min="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-            </div>
-            <button id="saveCapacityBtn" class="mt-3 w-full px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-              <i class="fas fa-save mr-1"></i>Lưu cài đặt
-            </button>
-          </div>
+          <button id="saveCapacityBtn" class="mt-3 w-full px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+            <i class="fas fa-save mr-1"></i>Lưu cài đặt
+          </button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Lịch tuần -->
-      <section id="weekGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 mb-10"></section>
+    <!-- Lịch tuần -->
+    <section id="weekGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 mb-10"></section>
 
-      <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-200 pt-6">
-        <div class="flex items-center justify-center gap-1 mb-1">
-          <i class="fas fa-calendar-check text-indigo-500"></i>
-          <span>© 2025 — Shift Signup Pro</span>
-        </div>
-        <p>Dữ liệu được lưu trữ trên Firebase</p>
-      </footer>
-    </div>
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-200 pt-6">
+      <div class="flex items-center justify-center gap-1 mb-1">
+        <i class="fas fa-calendar-check text-indigo-500"></i>
+        <span>© 2025 — Shift Signup Lite</span>
+      </div>
+      <p>Lưu cục bộ bằng LocalStorage trên trình duyệt</p>
+    </footer>
   </div>
 
   <script>
-    // ====== Cấu hình Firebase ======
-    const firebaseConfig = {
-  apiKey: "AIzaSyCv8G2wLnih8XyBsL2H9yzo4ss9mQ3dIbo",
-  authDomain: "lich-lam-vic.firebaseapp.com",
-  projectId: "lich-lam-vic",
-  storageBucket: "lich-lam-vic.firebasestorage.app",
-  messagingSenderId: "715785571243",
-  appId: "1:715785571243:web:c3d69593bfe22e2c9c20ee",
-  measurementId: "G-2JCT2EFLH4"
-};
+    // ====== Cấu hình cơ bản ======
+    const ADMIN_PASSWORD = 'thaithae2025@'; 
+    const STORAGE_KEY = 'shiftSignupDataV2';
+    const EMPLOYEES_KEY = 'shiftEmployees';
+    const CAPACITY_KEY = 'shiftCapacity';
 
-    // Khởi tạo Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    // ====== Cấu hình ứng dụng ======
     const VN_DAYS = ['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'];
 
+    // Sức chứa theo quy tắc
+    function capacityFor(dayIndex, shift) {
+      // Lấy cài đặt sức chứa từ localStorage
+      const capacitySettings = loadCapacitySettings();
+      
+      if (shift === 'sang') {
+        return capacitySettings.morning || 2;
+      }
+      
+      // Tối: T2→T5 (0..3), T6→CN (4..6)
+      return dayIndex <= 3 
+        ? (capacitySettings.eveningWeekday || 4) 
+        : (capacitySettings.eveningWeekend || 5);
+    }
+
     // ====== Helpers ngày/tuần ======
-    function startOfWeek(date) {
+    function startOfWeek(date) { // Monday as start
       const d = new Date(date);
-      const day = (d.getDay() + 6) % 7;
+      const day = (d.getDay() + 6) % 7; // 0=Mon..6=Sun
       d.setDate(d.getDate() - day);
       d.setHours(0,0,0,0);
       return d;
@@ -309,15 +286,56 @@
       return date.toISOString().slice(0,10);
     }
 
-    // ====== Quản lý giao diện ======
-    const loginScreen = document.getElementById('loginScreen');
-    const appContainer = document.getElementById('appContainer');
-    const userEmail = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const loginBtn = document.getElementById('loginBtn');
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const adminSection = document.getElementById('adminSection');
+    // ====== Lưu trữ ======
+    function loadAll(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+      catch(e){ return {}; }
+    }
+
+    function saveAll(data){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadEmployees(){
+      try { return JSON.parse(localStorage.getItem(EMPLOYEES_KEY) || '[]'); }
+      catch(e){ return []; }
+    }
+
+    function saveEmployees(employees){
+      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(employees));
+    }
+
+    function loadCapacitySettings(){
+      try { return JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}'); }
+      catch(e){ return {}; }
+    }
+
+    function saveCapacitySettings(settings){
+      localStorage.setItem(CAPACITY_KEY, JSON.stringify(settings));
+    }
+
+    function weekKeyOf(date){
+      return 'week_' + fmtISODate(startOfWeek(date));
+    }
+
+    // Lấy danh sách theo tuần (object)
+    function getWeekData(date){
+      const all = loadAll();
+      const key = weekKeyOf(date);
+      return all[key] || [];
+    }
+
+    function setWeekData(date, list){
+      const all = loadAll();
+      const key = weekKeyOf(date);
+      all[key] = list;
+      saveAll(all);
+    }
+
+    // ====== Trạng thái giao diện ======
+    let currentWeekStart = startOfWeek(new Date());
+    let isAdmin = false;
+
     const weekStartInput = document.getElementById('weekStart');
     const prevWeekBtn = document.getElementById('prevWeek');
     const nextWeekBtn = document.getElementById('nextWeek');
@@ -327,6 +345,8 @@
     const empNameSelect = document.getElementById('empName');
     const shiftSelect = document.getElementById('shift');
     const noteInput = document.getElementById('note');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const adminToggleBtn = document.getElementById('adminToggle');
     const exportBtn = document.getElementById('exportBtn');
     const clearWeekBtn = document.getElementById('clearWeekBtn');
     const toast = document.getElementById('toast');
@@ -341,13 +361,6 @@
     const morningCapacityText = document.getElementById('morning-capacity-text');
     const eveningWeekdayCapacityText = document.getElementById('evening-weekday-capacity-text');
     const eveningWeekendCapacityText = document.getElementById('evening-weekend-capacity-text');
-
-    let currentWeekStart = startOfWeek(new Date());
-    let currentUser = null;
-    let isAdmin = false;
-    let employees = [];
-    let capacitySettings = {};
-    let weekData = [];
 
     function showToast(msg, type='ok'){
       toast.textContent = msg;
@@ -366,153 +379,6 @@
       setTimeout(()=>toast.classList.add('hidden'), 3000);
     }
 
-    // ====== Firebase Functions ======
-    async function loadEmployees() {
-      try {
-        const snapshot = await db.collection('employees').get();
-        employees = snapshot.docs.map(doc => doc.data().name);
-        renderEmployeeDropdown();
-        renderEmployeeList();
-      } catch (error) {
-        console.error("Error loading employees:", error);
-        showToast('Lỗi khi tải danh sách nhân viên', 'err');
-      }
-    }
-
-    async function addEmployee(name) {
-      try {
-        await db.collection('employees').add({
-          name: name,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await loadEmployees();
-        showToast('Đã thêm nhân viên mới', 'ok');
-      } catch (error) {
-        console.error("Error adding employee:", error);
-        showToast('Lỗi khi thêm nhân viên', 'err');
-      }
-    }
-
-    async function deleteEmployee(name) {
-      try {
-        const querySnapshot = await db.collection('employees')
-          .where('name', '==', name)
-          .get();
-        
-        querySnapshot.forEach(async (doc) => {
-          await db.collection('employees').doc(doc.id).delete();
-        });
-        
-        await loadEmployees();
-        showToast('Đã xóa nhân viên', 'ok');
-      } catch (error) {
-        console.error("Error deleting employee:", error);
-        showToast('Lỗi khi xóa nhân viên', 'err');
-      }
-    }
-
-    async function loadCapacitySettings() {
-      try {
-        const doc = await db.collection('settings').doc('capacity').get();
-        if (doc.exists) {
-          capacitySettings = doc.data();
-        } else {
-          // Default values
-          capacitySettings = {
-            morning: 2,
-            eveningWeekday: 4,
-            eveningWeekend: 5
-          };
-          await db.collection('settings').doc('capacity').set(capacitySettings);
-        }
-        loadCapacityInputs();
-      } catch (error) {
-        console.error("Error loading capacity settings:", error);
-        showToast('Lỗi khi tải cài đặt', 'err');
-      }
-    }
-
-    async function saveCapacitySettings() {
-      try {
-        await db.collection('settings').doc('capacity').set(capacitySettings);
-        loadCapacityInputs();
-        showToast('Đã lưu cài đặt sức chứa', 'ok');
-      } catch (error) {
-        console.error("Error saving capacity settings:", error);
-        showToast('Lỗi khi lưu cài đặt', 'err');
-      }
-    }
-
-    async function loadWeekData() {
-      try {
-        const weekKey = fmtISODate(currentWeekStart);
-        const snapshot = await db.collection('shifts')
-          .where('week', '==', weekKey)
-          .get();
-        
-        weekData = [];
-        snapshot.forEach(doc => {
-          weekData.push(doc.data());
-        });
-        
-        renderWeekGrid();
-      } catch (error) {
-        console.error("Error loading week data:", error);
-        showToast('Lỗi khi tải dữ liệu tuần', 'err');
-      }
-    }
-
-    async function addShift(shiftData) {
-      try {
-        await db.collection('shifts').add({
-          ...shiftData,
-          week: fmtISODate(currentWeekStart),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          userId: currentUser.uid
-        });
-        
-        await loadWeekData();
-        showToast('Đăng ký thành công!', 'ok');
-        noteInput.value = '';
-      } catch (error) {
-        console.error("Error adding shift:", error);
-        showToast('Lỗi khi đăng ký ca', 'err');
-      }
-    }
-
-    async function deleteShift(shiftId) {
-      try {
-        await db.collection('shifts').doc(shiftId).delete();
-        await loadWeekData();
-        showToast('Đã xóa đăng ký.', 'ok');
-      } catch (error) {
-        console.error("Error deleting shift:", error);
-        showToast('Lỗi khi xóa đăng ký', 'err');
-      }
-    }
-
-    async function clearWeek() {
-      try {
-        const weekKey = fmtISODate(currentWeekStart);
-        const snapshot = await db.collection('shifts')
-          .where('week', '==', weekKey)
-          .get();
-        
-        const batch = db.batch();
-        snapshot.forEach(doc => {
-          batch.delete(doc.ref);
-        });
-        
-        await batch.commit();
-        await loadWeekData();
-        showToast('Đã xóa toàn bộ đăng ký tuần.', 'ok');
-      } catch (error) {
-        console.error("Error clearing week:", error);
-        showToast('Lỗi khi xóa dữ liệu tuần', 'err');
-      }
-    }
-
-    // ====== Giao diện ======
     function renderDayChoices(){
       dayChoices.innerHTML = '';
       for (let i=0;i<7;i++){
@@ -523,23 +389,36 @@
         btn.className='day-cell px-3 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-indigo-50 text-sm transition-colors';
         btn.innerHTML = `<div class="font-medium">${VN_DAYS[i].substring(0, 3)}</div><div class="text-xs text-slate-500">${d.getDate()}/${d.getMonth()+1}</div>`;
         btn.addEventListener('click',()=>{
+          // toggle selection visual
           [...dayChoices.children].forEach(c=>c.classList.remove('selected'));
           btn.classList.add('selected');
           dayChoices.dataset.selected = i;
         });
         dayChoices.appendChild(btn);
       }
+      // default select Monday
       dayChoices.children[0]?.click();
     }
 
-    function capacityFor(dayIndex, shift) {
-      if (shift === 'sang') {
-        return capacitySettings.morning || 2;
-      }
-      
-      return dayIndex <= 3 
-        ? (capacitySettings.eveningWeekday || 4) 
-        : (capacitySettings.eveningWeekend || 5);
+    function entryKey(dayIndex, shift){
+      return `${fmtISODate(currentWeekStart)}_${dayIndex}_${shift}`;
+    }
+
+    function getEntries(){
+      return getWeekData(currentWeekStart);
+    }
+
+    function setEntries(list){
+      setWeekData(currentWeekStart, list);
+    }
+
+    function listFor(dayIndex, shift){
+      return getEntries().filter(e=>e.dayIndex===dayIndex && e.shift===shift);
+    }
+
+    function alreadyRegistered(name, dayIndex, shift){
+      name = name.trim().toLowerCase();
+      return getEntries().some(e=> e.dayIndex===dayIndex && e.shift===shift && e.name.trim().toLowerCase()===name);
     }
 
     function renderWeekGrid(){
@@ -564,7 +443,7 @@
 
         ['sang','toi'].forEach(shift=>{
           const cap = capacityFor(i, shift);
-          const items = weekData.filter(e => e.dayIndex === i && e.shift === shift);
+          const items = listFor(i, shift);
           const remain = cap - items.length;
           const isFull = remain <= 0;
 
@@ -594,7 +473,7 @@
             empty.innerHTML = '<i class="far fa-frown mr-1"></i> Chưa có ai đăng ký';
             list.appendChild(empty);
           } else {
-            items.forEach((e)=>{
+            items.forEach((e, idx)=>{
               const row = document.createElement('div');
               row.className='group flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl transition-colors hover:bg-slate-100';
               
@@ -617,11 +496,8 @@
               
               const right = document.createElement('div');
               right.className='flex items-center gap-2 text-xs text-slate-500';
-              
-              if (e.createdAt && e.createdAt.toDate) {
-                const time = e.createdAt.toDate();
-                right.innerHTML = `<span>${time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
-              }
+              const time = new Date(e.createdAt);
+              right.innerHTML = `<span>${time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
 
               if (isAdmin){
                 const delBtn = document.createElement('button');
@@ -629,7 +505,11 @@
                 delBtn.className='opacity-0 group-hover:opacity-100 px-2 py-1 rounded-lg bg-rose-500 text-white text-xs hover:bg-rose-600 transition-opacity';
                 delBtn.innerHTML = '<i class="fas fa-times"></i>';
                 delBtn.addEventListener('click', ()=>{
-                  deleteShift(e.id);
+                  const cur = getEntries();
+                  const keep = cur.filter(x=> !(x.dayIndex===i && x.shift===shift && x.name===e.name && x.createdAt===e.createdAt));
+                  setEntries(keep);
+                  renderWeekGrid();
+                  showToast('Đã xóa đăng ký.', 'ok');
                 });
                 right.appendChild(delBtn);
               }
@@ -649,6 +529,7 @@
     }
 
     function renderEmployeeDropdown() {
+      const employees = loadEmployees();
       empNameSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
       
       employees.forEach(employee => {
@@ -660,6 +541,7 @@
     }
 
     function renderEmployeeList() {
+      const employees = loadEmployees();
       employeeList.innerHTML = '';
       
       employees.forEach(employee => {
@@ -669,239 +551,225 @@
         const nameSpan = document.createElement('span');
         nameSpan.textContent = employee;
         
-        if (isAdmin) {
-          const delBtn = document.createElement('button');
-          delBtn.className = 'px-2 py-1 text-xs bg-rose-500 text-white rounded hover:bg-rose-600';
-          delBtn.innerHTML = '<i class="fas fa-trash"></i>';
-          delBtn.addEventListener('click', () => {
-            deleteEmployee(employee);
-          });
-          
-          li.appendChild(nameSpan);
-          li.appendChild(delBtn);
-        } else {
-          li.appendChild(nameSpan);
-        }
+        const delBtn = document.createElement('button');
+        delBtn.className = 'px-2 py-1 text-xs bg-rose-500 text-white rounded hover:bg-rose-600';
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        delBtn.addEventListener('click', () => {
+          const updatedEmployees = employees.filter(e => e !== employee);
+          saveEmployees(updatedEmployees);
+          renderEmployeeList();
+          renderEmployeeDropdown();
+          showToast('Đã xóa nhân viên.', 'ok');
+        });
         
+        li.appendChild(nameSpan);
+        li.appendChild(delBtn);
         employeeList.appendChild(li);
       });
     }
 
     function loadCapacityInputs() {
+      const capacitySettings = loadCapacitySettings();
+      
       capacityMorningInput.value = capacitySettings.morning || 2;
       capacityEveningWeekdayInput.value = capacitySettings.eveningWeekday || 4;
       capacityEveningWeekendInput.value = capacitySettings.eveningWeekend || 5;
       
+      // Cập nhật text hiển thị
       morningCapacityText.textContent = capacitySettings.morning || 2;
       eveningWeekdayCapacityText.textContent = capacitySettings.eveningWeekday || 4;
       eveningWeekendCapacityText.textContent = capacitySettings.eveningWeekend || 5;
     }
 
+    // ====== Sự kiện ======
     function updateWeekInput(){
       weekStartInput.value = fmtISODate(currentWeekStart);
     }
 
-    function checkAdmin(user) {
-      // Đây là nơi bạn có thể kiểm tra xem user có phải là admin không
-      // Có thể dựa vào email, custom claims, hoặc document trong Firestore
-      // Ví dụ đơn giản: chỉ định một email làm admin
-      const adminEmails = ['admin@company.com', 'minhtan@company.com'];
-      return adminEmails.includes(user.email);
-    }
+    weekStartInput.addEventListener('change', (e)=>{
+      const d = new Date(e.target.value);
+      currentWeekStart = startOfWeek(d);
+      updateWeekInput();
+      renderDayChoices();
+      renderWeekGrid();
+    });
 
-    function setupEventListeners() {
-      weekStartInput.addEventListener('change', (e)=>{
-        const d = new Date(e.target.value);
-        currentWeekStart = startOfWeek(d);
-        updateWeekInput();
-        renderDayChoices();
-        loadWeekData();
-      });
+    prevWeekBtn.addEventListener('click', ()=>{
+      currentWeekStart = addDays(currentWeekStart, -7);
+      updateWeekInput();
+      renderDayChoices();
+      renderWeekGrid();
+    });
 
-      prevWeekBtn.addEventListener('click', ()=>{
-        currentWeekStart = addDays(currentWeekStart, -7);
-        updateWeekInput();
-        renderDayChoices();
-        loadWeekData();
-      });
+    nextWeekBtn.addEventListener('click', ()=>{
+      currentWeekStart = addDays(currentWeekStart, 7);
+      updateWeekInput();
+      renderDayChoices();
+      renderWeekGrid();
+    });
 
-      nextWeekBtn.addEventListener('click', ()=>{
-        currentWeekStart = addDays(currentWeekStart, 7);
-        updateWeekInput();
-        renderDayChoices();
-        loadWeekData();
-      });
+    signupForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = (empNameSelect.value||'').trim();
+      if (!name){ showToast('Vui lòng chọn nhân viên.', 'err'); return; }
+      const shift = shiftSelect.value; // 'sang' | 'toi'
+      const dayIndex = parseInt(dayChoices.dataset.selected || '0');
+      const note = (noteInput.value||'').trim();
 
-      signupForm.addEventListener('submit', (e)=>{
-        e.preventDefault();
-        const name = (empNameSelect.value||'').trim();
-        if (!name){ showToast('Vui lòng chọn nhân viên.', 'err'); return; }
-        const shift = shiftSelect.value;
-        const dayIndex = parseInt(dayChoices.dataset.selected || '0');
-        const note = (noteInput.value||'').trim();
+      // Kiểm tra trùng
+      if (alreadyRegistered(name, dayIndex, shift)){
+        showToast('Nhân viên đã đăng ký ca này rồi.', 'err');
+        return;
+      }
 
-        // Kiểm tra trùng
-        const alreadyRegistered = weekData.some(e => 
-          e.dayIndex === dayIndex && e.shift === shift && e.name === name
-        );
-        
-        if (alreadyRegistered){
-          showToast('Nhân viên đã đăng ký ca này rồi.', 'err');
-          return;
-        }
+      // Kiểm tra còn slot
+      const cap = capacityFor(dayIndex, shift);
+      const current = listFor(dayIndex, shift);
+      if (current.length >= cap){
+        showToast('Ca đã đủ số lượng.', 'err');
+        return;
+      }
 
-        // Kiểm tra còn slot
-        const cap = capacityFor(dayIndex, shift);
-        const current = weekData.filter(e => e.dayIndex === dayIndex && e.shift === shift);
-        if (current.length >= cap){
-          showToast('Ca đã đủ số lượng.', 'err');
-          return;
-        }
+      const entry = { name, shift, dayIndex, note, createdAt: new Date().toISOString() };
+      const all = getEntries();
+      all.push(entry);
+      setEntries(all);
+      renderWeekGrid();
+      showToast('Đăng ký thành công!', 'ok');
+      noteInput.value = ''; // Reset ghi chú
+    });
 
-        addShift({ name, shift, dayIndex, note });
-      });
-
-      logoutBtn.addEventListener('click', () => {
-        auth.signOut();
-      });
-
-      addEmployeeBtn.addEventListener('click', () => {
-        const name = newEmployeeInput.value.trim();
-        if (!name) {
-          showToast('Vui lòng nhập tên nhân viên.', 'err');
-          return;
-        }
-        
-        if (employees.includes(name)) {
-          showToast('Nhân viên đã tồn tại.', 'err');
-          return;
-        }
-        
-        addEmployee(name);
-        newEmployeeInput.value = '';
-      });
-
-      saveCapacityBtn.addEventListener('click', () => {
-        const morning = parseInt(capacityMorningInput.value) || 2;
-        const eveningWeekday = parseInt(capacityEveningWeekdayInput.value) || 4;
-        const eveningWeekend = parseInt(capacityEveningWeekendInput.value) || 5;
-        
-        if (morning < 1 || eveningWeekday < 1 || eveningWeekend < 1) {
-          showToast('Sức chứa phải lớn hơn 0.', 'err');
-          return;
-        }
-        
-        capacitySettings = { morning, eveningWeekday, eveningWeekend };
-        saveCapacitySettings();
-        renderWeekGrid();
-      });
-
-      exportBtn.addEventListener('click', ()=>{
-        if (!isAdmin) return;
-        
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "LỊCH LÀM VIỆC - TUẦN BẮT ĐẦU " + fmtISODate(currentWeekStart) + "\r\n\r\n";
-        csvContent += "Ngày,Buổi,Họ tên,Ghi chú,Giờ đăng ký\r\n";
-        
-        const data = weekData.slice().sort((a,b)=> a.dayIndex-b.dayIndex || a.shift.localeCompare(b.shift));
-        
-        data.forEach(entry=>{
-          const dayDate = addDays(currentWeekStart, entry.dayIndex);
-          const dateStr = `${dayDate.getDate()}/${dayDate.getMonth()+1}/${dayDate.getFullYear()}`;
-          const shiftName = entry.shift === 'sang' ? 'Sáng' : 'Tối';
-          let timeStr = '';
-          
-          if (entry.createdAt && entry.createdAt.toDate) {
-            const time = entry.createdAt.toDate();
-            timeStr = time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' + time.toLocaleDateString();
-          }
-          
-          const escapeCSV = (str) => {
-            if (!str) return '';
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-              return '"' + str.replace(/"/g, '""') + '"';
-            }
-            return str;
-          };
-          
-          csvContent += `${escapeCSV(dateStr)},${escapeCSV(shiftName)},${escapeCSV(entry.name)},${escapeCSV(entry.note)},${escapeCSV(timeStr)}\r\n`;
-        });
-        
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `LichLamViec_${fmtISODate(currentWeekStart)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showToast('Đã xuất file Excel (CSV).', 'ok');
-      });
-
-      clearWeekBtn.addEventListener('click', ()=>{
-        if (!isAdmin) return;
-        if (!confirm('Xóa tất cả đăng ký trong tuần này? Không thể hoàn tác.')) return;
-        clearWeek();
-      });
-
-      loginBtn.addEventListener('click', async () => {
-        const email = loginEmail.value;
-        const password = loginPassword.value;
-        
-        if (!email || !password) {
-          showToast('Vui lòng nhập email và mật khẩu', 'err');
-          return;
-        }
-        
-        try {
-          await auth.signInWithEmailAndPassword(email, password);
-        } catch (error) {
-          showToast('Email hoặc mật khẩu không đúng', 'err');
-          console.error("Login error:", error);
-        }
-      });
-    }
-
-    // ====== Khởi tạo ứng dụng ======
-    function initApp() {
-      setupEventListeners();
-      
-      // Theo dõi trạng thái đăng nhập
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          currentUser = user;
-          userEmail.textContent = user.email;
-          isAdmin = checkAdmin(user);
-          
-          // Ẩn màn hình đăng nhập, hiện ứng dụng
-          loginScreen.classList.add('hidden');
-          appContainer.classList.remove('hidden');
-          
-          // Hiện section admin nếu là admin
-          if (isAdmin) {
-            adminSection.classList.remove('hidden');
-          } else {
-            adminSection.classList.add('hidden');
-          }
-          
-          // Tải dữ liệu
-          await loadEmployees();
-          await loadCapacitySettings();
-          await loadWeekData();
-          renderDayChoices();
-          updateWeekInput();
-          
+    adminToggleBtn.addEventListener('click', ()=>{
+      if (!isAdmin){
+        if (adminPasswordInput.value === ADMIN_PASSWORD){
+          isAdmin = true;
+          adminToggleBtn.textContent = 'Đăng xuất';
+          adminToggleBtn.classList.add('bg-indigo-600');
+          exportBtn.disabled = false;
+          clearWeekBtn.disabled = false;
+          adminControls.classList.remove('hidden');
+          showToast('Đăng nhập admin thành công.', 'ok');
+          renderWeekGrid();
+          renderEmployeeList();
+          loadCapacityInputs();
         } else {
-          // Hiện màn hình đăng nhập
-          loginScreen.classList.remove('hidden');
-          appContainer.classList.add('hidden');
-          currentUser = null;
+          showToast('Sai mật khẩu admin.', 'err');
         }
+      } else {
+        isAdmin = false;
+        adminToggleBtn.textContent = 'Đăng nhập';
+        adminToggleBtn.classList.remove('bg-indigo-600');
+        exportBtn.disabled = true;
+        clearWeekBtn.disabled = true;
+        adminControls.classList.add('hidden');
+        showToast('Đã đăng xuất admin.', 'ok');
+        renderWeekGrid();
+      }
+    });
+
+    addEmployeeBtn.addEventListener('click', () => {
+      const name = newEmployeeInput.value.trim();
+      if (!name) {
+        showToast('Vui lòng nhập tên nhân viên.', 'err');
+        return;
+      }
+      
+      const employees = loadEmployees();
+      if (employees.includes(name)) {
+        showToast('Nhân viên đã tồn tại.', 'err');
+        return;
+      }
+      
+      employees.push(name);
+      saveEmployees(employees);
+      renderEmployeeList();
+      renderEmployeeDropdown();
+      newEmployeeInput.value = '';
+      showToast('Đã thêm nhân viên mới.', 'ok');
+    });
+
+    saveCapacityBtn.addEventListener('click', () => {
+      const morning = parseInt(capacityMorningInput.value) || 2;
+      const eveningWeekday = parseInt(capacityEveningWeekdayInput.value) || 4;
+      const eveningWeekend = parseInt(capacityEveningWeekendInput.value) || 5;
+      
+      if (morning < 1 || eveningWeekday < 1 || eveningWeekend < 1) {
+        showToast('Sức chứa phải lớn hơn 0.', 'err');
+        return;
+      }
+      
+      saveCapacitySettings({ morning, eveningWeekday, eveningWeekend });
+      loadCapacityInputs();
+      renderWeekGrid();
+      showToast('Đã lưu cài đặt sức chứa.', 'ok');
+    });
+
+    exportBtn.addEventListener('click', ()=>{
+      if (!isAdmin) return;
+      
+      // Tạo nội dung CSV với font Times New Roman được chỉ định
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      
+      // Thêm dòng tiêu đề với thông tin tuần
+      csvContent += "LỊCH LÀM VIỆC - TUẦN BẮT ĐẦU " + fmtISODate(currentWeekStart) + "\r\n\r\n";
+      
+      // Tiêu đề các cột
+      csvContent += "Ngày,Buổi,Họ tên,Ghi chú,Giờ đăng ký\r\n";
+      
+      // Dữ liệu
+      const data = getEntries().slice().sort((a,b)=> a.dayIndex-b.dayIndex || a.shift.localeCompare(b.shift) || a.createdAt.localeCompare(b.createdAt));
+      
+      data.forEach(entry=>{
+        const dayDate = addDays(currentWeekStart, entry.dayIndex);
+        const dateStr = `${dayDate.getDate()}/${dayDate.getMonth()+1}/${dayDate.getFullYear()}`;
+        const shiftName = entry.shift === 'sang' ? 'Sáng' : 'Tối';
+        const time = new Date(entry.createdAt);
+        const timeStr = time.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' + time.toLocaleDateString();
+        
+        // Escape các ký tự đặc biệt trong CSV
+        const escapeCSV = (str) => {
+          if (!str) return '';
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+          }
+          return str;
+        };
+        
+        csvContent += `${escapeCSV(dateStr)},${escapeCSV(shiftName)},${escapeCSV(entry.name)},${escapeCSV(entry.note)},${escapeCSV(timeStr)}\r\n`;
       });
+      
+      // Tạo file và download
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `LichLamViec_${fmtISODate(currentWeekStart)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Đã xuất file Excel (CSV).', 'ok');
+    });
+
+    clearWeekBtn.addEventListener('click', ()=>{
+      if (!isAdmin) return;
+      if (!confirm('Xóa tất cả đăng ký trong tuần này? Không thể hoàn tác.')) return;
+      setEntries([]);
+      renderWeekGrid();
+      showToast('Đã xóa toàn bộ đăng ký tuần.', 'ok');
+    });
+
+    // ====== Khởi tạo ======
+    function init(){
+      // Đặt tuần hiện tại
+      currentWeekStart = startOfWeek(new Date());
+      updateWeekInput();
+      renderDayChoices();
+      renderWeekGrid();
+      renderEmployeeDropdown();
+      loadCapacityInputs();
     }
 
-    // Khởi chạy ứng dụng
-    initApp();
+    init();
   </script>
 </body>
 </html>
